@@ -1,0 +1,108 @@
+!DOCTYPE html
+html lang=zh-CN
+head
+    meta charset=UTF-8
+    meta name=viewport content=width=device-width, initial-scale=1.0
+    title油耗记录助手title
+    style
+        body { font-family Arial, sans-serif; padding 20px; max-width 600px; margin 0 auto; }
+        .form-group { margin-bottom 15px; }
+        input { width 100%; padding 8px; margin-top 5px; }
+        button { background #007bff; color white; border none; padding 10px 20px; cursor pointer; }
+        buttonhover { background #0056b3; }
+        .record { border 1px solid #ddd; padding 10px; margin 10px 0; }
+    style
+head
+body
+    h1油耗记录助手h1
+    
+    !-- 输入表单 --
+    div class=form-group
+        label日期：label
+        input type=date id=date required
+    div
+    div class=form-group
+        label加油金额（元）：label
+        input type=number id=amount step=0.01 required
+    div
+    div class=form-group
+        label本次里程（公里）：label
+        input type=number id=mileage step=0.1 required
+    div
+    div class=form-group
+        label总里程（公里）：label
+        input type=number id=totalMileage step=0.1 required
+    div
+    button onclick=saveRecord()保存记录button
+
+    !-- 显示记录和统计 --
+    h2历史记录h2
+    div id=recordsdiv
+    
+    h2统计h2
+    div id=statsdiv
+
+    script
+         从 LocalStorage 加载记录
+        let records = JSON.parse(localStorage.getItem('fuelRecords')  '[]');
+
+         保存记录
+        function saveRecord() {
+            const record = {
+                date document.getElementById('date').value,
+                amount parseFloat(document.getElementById('amount').value),
+                mileage parseFloat(document.getElementById('mileage').value),
+                totalMileage parseFloat(document.getElementById('totalMileage').value)
+            };
+            
+            records.push(record);
+            localStorage.setItem('fuelRecords', JSON.stringify(records));
+            updateDisplay();
+            clearForm();
+        }
+
+         清空表单
+        function clearForm() {
+            document.getElementById('date').value = '';
+            document.getElementById('amount').value = '';
+            document.getElementById('mileage').value = '';
+            document.getElementById('totalMileage').value = '';
+        }
+
+         更新显示
+        function updateDisplay() {
+            const recordsDiv = document.getElementById('records');
+            const statsDiv = document.getElementById('stats');
+            
+             显示记录
+            recordsDiv.innerHTML = records.reverse().map(record = `
+                div class=record
+                    p日期：${record.date}p
+                    p金额：${record.amount} 元p
+                    p本次里程：${record.mileage} 公里p
+                    p总里程：${record.totalMileage} 公里p
+                div
+            `).join('');
+
+             计算平均油耗（每元能跑多少公里）
+            if (records.length = 2) {
+                let totalCost = 0;
+                let totalDistance = 0;
+                for (let i = 1; i  records.length; i++) {
+                    const prev = records[i-1];
+                    const current = records[i];
+                    totalCost += current.amount;
+                    totalDistance += current.mileage;
+                }
+                const average = totalDistance  totalCost;
+                statsDiv.innerHTML = `平均油耗：每元可行驶 strong${average.toFixed(2)}strong 公里`;
+            } else {
+                statsDiv.innerHTML = '至少需要两次记录才能计算油耗';
+            }
+        }
+
+         初始化时加载记录
+        updateDisplay();
+    script
+body
+html
